@@ -25,7 +25,13 @@ module.exports = {
         // look for the role
 		let streamerkeyRole = interaction.guild.roles.cache.find(role => role.name === "streamer-key");
 
-    
+        if (!streamerkeyRole){
+            await interaction.reply({
+                content: `You must first do setup using /admin!`,
+                ephemeral: true,
+            })
+        }
+
         await interaction.reply({
             content: `Adding role to ${target.username}!`,
             ephemeral: true,

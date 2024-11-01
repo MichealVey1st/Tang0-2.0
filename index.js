@@ -14,45 +14,11 @@ client.once(Events.ClientReady, async readyClient => {
     
 	// for each server
     client.guilds.cache.forEach(async (guild) => {
-
-		// find the general channel
-        let generalChannel = await findChannelByName(guild, "general", ChannelType.GuildText);
-        
-		// if it couldnt find it
-        if (!generalChannel) {
-			// create new general
-            generalChannel = await guild.channels.create({
-                name: "general",
-                type: ChannelType.GuildText,
-                reason: "Created by Tang0 bot."
-            });
-			// output in console
-            console.log(`Created "general" text channel in ${guild.name}: ${generalChannel.id}`);
-        } else {
-			// found it log it too
-            console.log(`Found "general" text channel in ${guild.name}: ${generalChannel.id}`);
-        }
-
-		// look for the role
-		let threadManagerRole = guild.roles.cache.find(role => role.name === "thread-manager");
-		// get tango's id
-        const tango = await guild.members.fetch(client.user.id);
-        
-		// if role doesnt exist
-        if (!threadManagerRole) {
-            // create it
-            threadManagerRole = await guild.roles.create({
-                name: "thread-manager",
-                reason: "Created for managing threads."
-            });
-			// log that it was created
-            console.log(`Created "thread-manager" role in ${guild.name}: ${threadManagerRole.id}`);
-        } else {
-			// log that it was found
-            console.log(`Found "thread-manager" role in ${guild.name}: ${threadManagerRole.id}`);
-        }
+		
 		// look for the role
 		let adminRole = guild.roles.cache.find(role => role.name === "admin");
+
+		const tango = await guild.members.fetch(client.user.id);
 
 		if (!adminRole) {
 			adminRole = await guild.roles.create({
@@ -71,58 +37,6 @@ client.once(Events.ClientReady, async readyClient => {
 			console.log(`Assigned "admin" role to Tang0 in ${guild.name}`);
 		}
 
-		// check if the bot has the "thread-manager" role if not add it
-        if (!tango.roles.cache.has(threadManagerRole.id)) {
-			// add the role
-            await tango.roles.add(threadManagerRole);
-			// output to console
-            console.log(`Assigned "thread-manager" role to the bot in ${guild.name}`);
-        }
-
-
-		// find bug-reports forum channel
-        let bugReportsChannel = await findChannelByName(guild, "bug-reports", ChannelType.GuildForum);
-
-		// if wasnt found
-		if (!bugReportsChannel) {
-			// try to create channel
-			try {
-				// create channel
-                bugReportsChannel = await guild.channels.create({
-					name: "bug-reports",
-					type: ChannelType.GuildForum,
-					reason: "Created by Tang0 bot.",
-					permissionOverwrites: [
-						{
-							id: guild.id, // @everyone
-							allow: [PermissionsBitField.Flags.SendMessages], // make sure people can send messages
-							deny: [
-								PermissionsBitField.Flags.CreatePublicThreads,
-								PermissionsBitField.Flags.CreatePrivateThreads // get rid of thread creation perms
-							],
-						},
-						{
-							id: threadManagerRole.id, // "thread-manager" role
-							allow: [
-								PermissionsBitField.Flags.SendMessages,
-								PermissionsBitField.Flags.CreatePublicThreads,
-								PermissionsBitField.Flags.CreatePrivateThreads // allow sending messages and creating threads
-							],
-						},
-					],
-				});
-				
-				// log the creation
-                console.log(`Created "bug-reports" forum channel in ${guild.name}: ${bugReportsChannel.id}`);
-            } catch (error) {
-				// log error and break
-				console.error(`Failed to create "bug-reports" channel in ${guild.name}:`, error);
-				return;
-			}
-		} else {
-			// found it so log it
-			console.log(`Found "bug-reports" forum channel in ${guild.name}: ${bugReportsChannel.id}`);
-		}
 	});
 });
 
@@ -220,13 +134,6 @@ client.on(Events.InteractionCreate, async interaction => {
 	console.log(interaction);
 	});
 });
-
-async function findChannelByName(guild, channelName, channelType) {
-    return guild.channels.cache.find(channel =>
-        channel.type === channelType && 
-        channel.name.toLowerCase() === channelName.toLowerCase()
-    ) || null;
-}
 
 const foldersPath = path.join(__dirname, 'commands');
 const commandFolders = fs.readdirSync(foldersPath);

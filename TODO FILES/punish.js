@@ -1,0 +1,1 @@
+// TODO create a menu like admin.js or something to choose from mod options warn ban timeout etc.
