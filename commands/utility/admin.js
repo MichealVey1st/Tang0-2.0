@@ -7,6 +7,7 @@ const {
     ComponentType,
     ChannelType
 } = require('discord.js');
+const emojiCharacters = require('../../emoji.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -45,83 +46,89 @@ module.exports = {
             }
 
             const selection = i.values[0];
+            let responseMessage;
+            const guild = interaction.guild;
 
-            if (selection === 'streamer'){
-                let guild = interaction.guild;
-                // look for the role
+            if (selection === 'streamer') {
+                // Look for or create the "streamer-key" role
                 let streamerKey = guild.roles.cache.find(role => role.name === "streamer-key");
-                let user = interaction.user.id;
-
-                // if role doesnt exist
                 if (!streamerKey) {
-                    // create it
                     streamerKey = await guild.roles.create({
                         name: "streamer-key",
                         reason: "Allows you to join the stream channel"
                     });
-                    // log that it was created
                     console.log(`Created "streamer-key" role in ${guild.name}: ${streamerKey.id}`);
                 } else {
-                    // log that it was found
                     console.log(`Found "streamer-key" role in ${guild.name}: ${streamerKey.id}`);
                 }
 
-                await i.reply({
-                    content: `Found/Created the streamer-key role!`,
-                    ephemeral: true,
-                })
+                // Create the Twitch VC channel if it doesn't exist
+                const twitchVCName = emojiCharacters.camera + emojiCharacters.blush + "Twitch Vc";
+                let twitchVCChannel = await findChannelByName(guild, twitchVCName, ChannelType.GuildVoice);
+                if (!twitchVCChannel) {
+                    try {
+                        twitchVCChannel = await guild.channels.create({
+                            name: twitchVCName,
+                            type: ChannelType.GuildVoice,
+                            reason: "Created by Tang0 bot.",
+                            permissionOverwrites: [
+                                {
+                                    id: guild.id, // @everyone
+                                    deny: [PermissionsBitField.Flags.Connect], // deny everyone from connecting
+                                },
+                                {
+                                    id: streamerKey.id, // "streamer-key" role
+                                    allow: [PermissionsBitField.Flags.Connect], // allow only streamer-key role to connect
+                                },
+                            ],
+                        });
+                        console.log(`Created ${twitchVCName} channel in ${guild.name}: ${twitchVCChannel.id}`);
+                    } catch (error) {
+                        console.error(`Failed to create ${twitchVCName} channel in ${guild.name}:`, error);
+                        responseMessage = `An error occurred while creating the ${twitchVCName} channel.`;
+                    }
+                } else {
+                    console.log(`Found ${twitchVCName} channel in ${guild.name}: ${twitchVCChannel.id}`);
+                }
+
+                responseMessage = responseMessage || `The "streamer-key" role and ${twitchVCName} channel are set up and ready to use!`;
 
             } else if (selection === 'bug') {
-
-                // look for the role
-                let threadManagerRole = interaction.guild.roles.cache.find(role => role.name === "thread-manager");
-                // get tango's id
-                const tango = await interaction.guild.members.fetch(interaction.client.user.id);
-
-                let guild = interaction.guild;
-
-
-                // if role doesnt exist
+                // Look for or create the "thread-manager" role
+                let threadManagerRole = guild.roles.cache.find(role => role.name === "thread-manager");
+                const tango = await guild.members.fetch(interaction.client.user.id);
                 if (!threadManagerRole) {
-                    // create it
                     threadManagerRole = await guild.roles.create({
                         name: "thread-manager",
                         reason: "Created for managing threads."
                     });
-                    // log that it was created
                     console.log(`Created "thread-manager" role in ${guild.name}: ${threadManagerRole.id}`);
                 } else {
-                    // log that it was found
                     console.log(`Found "thread-manager" role in ${guild.name}: ${threadManagerRole.id}`);
                 }
 
-                // check if the bot has the "thread-manager" role if not add it
+                // Assign the "thread-manager" role to the bot if it doesn't already have it
                 if (!tango.roles.cache.has(threadManagerRole.id)) {
-                    // add the role
                     await tango.roles.add(threadManagerRole);
-                    // output to console
                     console.log(`Assigned "thread-manager" role to the bot in ${guild.name}`);
                 }
 
-                // find bug-reports forum channel
-                let bugReportsChannel = await findChannelByName(guild, "bug-reports", ChannelType.GuildForum);
-
-                // if wasnt found
+                // Create the Bug Reports channel if it doesn't exist
+                const bugReportsName = "bug-reports" + emojiCharacters.bug;
+                let bugReportsChannel = await findChannelByName(guild, bugReportsName, ChannelType.GuildForum);
                 if (!bugReportsChannel) {
-                    // try to create channel
                     try {
-                        // create channel
                         bugReportsChannel = await guild.channels.create({
-                            name: "bug-reports",
+                            name: bugReportsName,
                             type: ChannelType.GuildForum,
                             reason: "Created by Tang0 bot.",
                             permissionOverwrites: [
                                 {
                                     id: guild.id, // @everyone
-                                    allow: [PermissionsBitField.Flags.SendMessages], // make sure people can send messages
+                                    allow: [PermissionsBitField.Flags.SendMessages], // allow messages
                                     deny: [
                                         PermissionsBitField.Flags.CreatePublicThreads,
-                                        PermissionsBitField.Flags.CreatePrivateThreads // get rid of thread creation perms
+                                        PermissionsBitField.Flags.CreatePrivateThreads // deny thread creation
                                     ],
                                 },
                                 {
@@ -134,25 +141,26 @@ module.exports = {
                                 },
                             ],
                         });
-                        
-                        // log the creation
-                        console.log(`Created "bug-reports" forum channel in ${guild.name}: ${bugReportsChannel.id}`);
+                        console.log(`Created "${bugReportsName}" forum channel in ${guild.name}: ${bugReportsChannel.id}`);
                     } catch (error) {
-                        // log error and break
-                        console.error(`Failed to create "bug-reports" channel in ${guild.name}:`, error);
-                        return;
+                        console.error(`Failed to create "${bugReportsName}" channel in ${guild.name}:`, error);
+                        responseMessage = `An error occurred while creating the ${bugReportsName} channel.`;
                     }
                 } else {
-                    // found it so log it
-                    console.log(`Found "bug-reports" forum channel in ${guild.name}: ${bugReportsChannel.id}`);
+                    console.log(`Found "${bugReportsName}" forum channel in ${guild.name}: ${bugReportsChannel.id}`);
                 }
-                await i.reply({
-                    content: `The channel ${bugReportsChannel} was found/created!`,
-                    ephemeral: true,
-                })
+
+                responseMessage = responseMessage || `The "thread-manager" role and ${bugReportsName} channel are set up and ready to use!`;
+
             } else {
-                await i.reply("ERROR")
+                responseMessage = "ERROR: Invalid selection.";
             }
+
+            // Send a single reply based on the setup outcome
+            await i.reply({
+                content: responseMessage,
+                ephemeral: true,
+            });
         });
 
         collector.on('end', collected => {
@@ -161,6 +169,7 @@ module.exports = {
     },
 };
 
+// Helper function to find a channel by name and type
 async function findChannelByName(guild, channelName, channelType) {
     return guild.channels.cache.find(channel =>
         channel.type === channelType && 
