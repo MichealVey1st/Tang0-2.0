@@ -14,60 +14,45 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName("punish")
         .setDescription('Moderation tools for those pesky pesky rule breakers...')
-        .setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator),
+        .setDefaultMemberPermissions(PermissionsBitField.Flags.Administrator)
+        .addUserOption( option =>
+            option.setName('user')
+                .setDescription('The user deemed to be punished! Show no mercy!')
+                .setRequired(true)
+        .addStringOption(option =>
+            option.setName('punishment')
+                .setDescription('The punishment type')
+                .setRequired(true)
+                .addChoices(
+                    { name: 'Ban', value: 'ban' },
+                    { name: 'Warn', value: 'warn' },
+                    { name: 'Timeout', value: 'tmout' },
+                ))
+        .addStringOption(option =>
+            option.setName('reason')
+                .setDescription('The reason for the punishment'))
+        ),
 
     async execute(interaction) {
-        const select = new StringSelectMenuBuilder()
-            .setCustomId('Setup')
-            .setPlaceholder('What would you like to set up?')
-            .addOptions(
-                new StringSelectMenuOptionBuilder()
-                    .setLabel('Ban')
-                    .setDescription('Sets up all the streamer channels, roles, and perms')
-                    .setValue('streamer'),
-                new StringSelectMenuOptionBuilder()
-                    .setLabel('Warn')
-                    .setDescription('Sets up all the bug reporting channels, roles, and perms')
-                    .setValue('warn'),
-                new StringSelectMenuOptionBuilder()
-                    .setLabel('Timeout')
-                    .setDescription('Times a specific person out.')
-                    .setValue('tmout'),
-            );
 
-        const row = new ActionRowBuilder().addComponents(select);
-
-        await interaction.reply({
-            content: 'Choose what to set up!',
-            components: [row],
-            ephemeral: true,
-        });
+        const target = interaction.options.getUser('target');
+        const punishment = interaction.option.getString('punishment');
+        const reason = interaction.options.getString('reason') ?? 'No reason provided';
         
-        const collector = interaction.channel.createMessageComponentCollector({ componentType: ComponentType.StringSelect, time: 3_600_000 });
-
-        collector.on('collect', async i => {
-            if (i.user.id !== interaction.user.id) {
-                return i.reply({ content: 'You cannot use this selection!', ephemeral: true });
+        if (punishment === 'ban'){
+            await interaction.reply({content: `Banning ${target.username} for reason: ${reason}`, ephemeral: true});
+            try {
+                await interaction.guild.members.ban(target);
+                await interaction.followUp({content: `${target.username} was banned`, ephemeral: true });
+            } catch (error) {
+                await interaction.followUp({content: `Unable to ban ${target.username} because: ${error}`, ephemeral: true});
             }
+        } else if (punishment === 'warn') {
 
-            const selection = i.values[0];
-            let responseMessage;
-            const guild = interaction.guild;
+        } else if (punishment === 'timeout') {
 
-            if (selection === 'streamer') {
-                
-                responseMessage = "ERROR: Invalid selection.";
-            }
-
-            // Send a single reply based on the setup outcome
-            await i.reply({
-                content: responseMessage,
-                ephemeral: true,
-            });
-        });
-
-        collector.on('end', collected => {
-            console.log(`Collected ${collected.size} items.`);
-        });
+        } else {
+            await interaction.reply({content: "ERROR: Something went wrong somewhere", ephemeral: true});
+        }
     },
 };
