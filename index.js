@@ -12,32 +12,33 @@ client.once(Events.ClientReady, async readyClient => {
     console.log(`Logged in as ${client.user.tag}!`); // say im ready
     client.user.setPresence({ activities: [{ name: '@g3tsquatch3d', type: ActivityType.Listening }], status: PresenceUpdateStatus.Online }); // set my status
     
+	// Checking if this admin role is really nessicary.
 	// for each server
-    client.guilds.cache.forEach(async (guild) => {
+    // client.guilds.cache.forEach(async (guild) => {
 		
-		// look for the role
-		let adminRole = guild.roles.cache.find(role => role.name === "admin");
+	// 	// look for the role
+	// 	let adminRole = guild.roles.cache.find(role => role.name === "admin");
 
-		const tango = await guild.members.fetch(client.user.id);
+	// 	const tango = await guild.members.fetch(client.user.id);
 
-		if (!adminRole) {
-			adminRole = await guild.roles.create({
-				name: "admin",
-				reason: "admin: admin",
-				permissions: [PermissionsBitField.Flags.Administrator]
-			});
-			console.log(`Created "admin" role in ${guild.name}: ${adminRole.id}`);
-		} else {
-			console.log(`Found "admin" role in ${guild.name}: ${adminRole.id}`);
-		}
+	// 	if (!adminRole) {
+	// 		adminRole = await guild.roles.create({
+	// 			name: "admin",
+	// 			reason: "admin: admin",
+	// 			permissions: [PermissionsBitField.Flags.Administrator]
+	// 		});
+	// 		console.log(`Created "admin" role in ${guild.name}: ${adminRole.id}`);
+	// 	} else {
+	// 		console.log(`Found "admin" role in ${guild.name}: ${adminRole.id}`);
+	// 	}
 
-		// check if Tang0 is an admin
-		if (!tango.roles.cache.has(adminRole.id)) {
-			await tango.roles.add(adminRole);
-			console.log(`Assigned "admin" role to Tang0 in ${guild.name}`);
-		}
+	// 	// check if Tang0 is an admin
+	// 	if (!tango.roles.cache.has(adminRole.id)) {
+	// 		await tango.roles.add(adminRole);
+	// 		console.log(`Assigned "admin" role to Tang0 in ${guild.name}`);
+	// 	}
 
-	});
+	// });
 });
 
 // when ticket modal is submitted
