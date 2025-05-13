@@ -26,7 +26,7 @@ module.exports = {
                 .addChoices(
                     { name: 'Ban', value: 'ban' },
                     { name: 'Warn', value: 'warn' },
-                    { name: 'Timeout', value: 'tmout' },
+                    { name: 'Timeout', value: 'timeout' },
                 ))
         .addStringOption(option =>
             option.setName('reason')
@@ -48,9 +48,17 @@ module.exports = {
                 await interaction.followUp({content: `Unable to ban ${target.username} because: ${error}`, ephemeral: true});
             }
         } else if (punishment === 'warn') {
-
+            await interaction.reply({content: `Warning ${target.username} for the reason: ${reason}`, ephemeral: true});
+            try{
+                // await interaction.guild.members.
+                // warn the player?
+            } catch (error) {
+                await interaction.followUp({content: `Unable to warn ${target.username} because: ${error}`, ephemeral: true});
+            }
         } else if (punishment === 'timeout') {
-
+            // add time
+            await interaction.reply({content: `Timing out ${target.username} for the reason: ${reason}`, ephemeral: true});
+            // add try function
         } else {
             await interaction.reply({content: "ERROR: Something went wrong somewhere", ephemeral: true});
         }
